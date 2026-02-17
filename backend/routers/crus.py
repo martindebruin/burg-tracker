@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query, HTTPException, Depends
 from typing import Optional
 from pydantic import BaseModel
 from database import db
+from auth import get_current_user
 
 router = APIRouter(prefix="/crus", tags=["crus"])
 
@@ -61,10 +62,11 @@ def list_crus(
     tasted: Optional[bool] = Query(None, description="Filter to crus you have/haven't tasted"),
     limit: int = Query(100, le=500),
     offset: int = Query(0, ge=0),
+    user = Depends(get_current_user)
 ):
     """List all crus with optional filtering. Also returns tasted status."""
     conditions = []
-    params = []
+    params = [user["id"]]  # First param is always user_id for the JOIN
 
     if q:
         conditions.append("(c.name ILIKE %s OR c.commune ILIKE %s)")
@@ -94,7 +96,7 @@ def list_crus(
             MAX(tn.rating) AS best_rating,
             bool_or(tn.id IS NOT NULL) AS tasted
         FROM cru c
-        LEFT JOIN tasting_note tn ON tn.cru_id = c.id
+        LEFT JOIN tasting_note tn ON tn.cru_id = c.id AND tn.user_id = %s
         {where}
         GROUP BY c.id
         ORDER BY c.subregion, c.commune, c.name
@@ -105,13 +107,13 @@ def list_crus(
     count_sql = f"""
         SELECT COUNT(DISTINCT c.id)
         FROM cru c
-        LEFT JOIN tasting_note tn ON tn.cru_id = c.id
+        LEFT JOIN tasting_note tn ON tn.cru_id = c.id AND tn.user_id = %s
         {where}
     """
 
     with db() as conn:
         cur = conn.cursor()
-        cur.execute(count_sql, params[:-2])
+        cur.execute(count_sql, [user["id"]] + params[1:-2])
         total = cur.fetchone()["count"]
 
         cur.execute(sql, params)
@@ -184,3 +186,52 @@ def update_cru(cru_id: int, updates: dict):
             raise HTTPException(status_code=404, detail="Cru not found")
 
         return dict(row)
+
+
+@router.get("/{cru_id}/community")
+def get_community_notes(cru_id: int, user = Depends(get_current_user)):
+    """Get aggregated ratings and all notes from all users for a cru"""
+    with db() as conn:
+        cur = conn.cursor()
+
+        # Aggregated stats
+        cur.execute("""
+            SELECT
+                AVG(rating)::FLOAT AS avg_rating,
+                COUNT(*)::INT AS rating_count
+            FROM tasting_note
+            WHERE cru_id = %s AND rating IS NOT NULL
+        """, (cru_id,))
+        stats = dict(cur.fetchone())
+
+        # All notes with usernames
+        cur.execute("""
+            SELECT
+                tn.id, tn.vintage, tn.tasted_on, tn.rating, tn.notes,
+                u.id AS user_id, u.username
+            FROM tasting_note tn
+            JOIN app_user u ON u.id = tn.user_id
+            WHERE tn.cru_id = %s
+            ORDER BY tn.tasted_on DESC
+        """, (cru_id,))
+
+        notes = []
+        for row in cur.fetchall():
+            r = dict(row)
+            notes.append({
+                "id": r["id"],
+                "vintage": r["vintage"],
+                "tasted_on": r["tasted_on"],
+                "rating": r["rating"],
+                "notes": r["notes"],
+                "user": {
+                    "id": r["user_id"],
+                    "username": r["username"]
+                }
+            })
+
+        return {
+            "avg_rating": stats["avg_rating"],
+            "rating_count": stats["rating_count"],
+            "notes": notes
+        }

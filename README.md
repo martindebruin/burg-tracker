@@ -8,10 +8,13 @@ En personlig app för att utforska och dokumentera burgundiska crus — Premier 
 ## Funktioner
 
 - **490+ Premier & Grand Crus** från Côte d'Or och Chablis
+- **Multi-user autentisering** med JWT — registrera, logga in, personliga anteckningar
+- **Admin-panel** — hantera användare, återställ lösenord, skapa nya användare
+- **Community-betyg** — se genomsnittliga betyg från alla användare på varje cru
 - **Interaktiv karta** med Leaflet — visualisera alla crus med färgkodade pins (Grand Cru i burgundy, Premier Cru i guld)
 - **Terroir-data** för varje cru: jordmån, höjd, exponering, areal, klimatnoteringar (på svenska)
 - **Provanteckningar** med −2 till +2 betyg (0 = som förväntat)
-- **Filtrera och sök** efter typ, delregion, kommun, provade/ej provade
+- **Filtrera och sök** efter typ, delregion, kommun, provade/ej provade (användarspecifikt)
 - **Snygga kort-vy** med Grand Cru (rosa-lavendel) och Premier Cru (periwinkle blå) färgkodning
 - **Redigera terroir & koordinater** direkt i UI:t
 - **Lägg till nya crus** via formulär
@@ -65,9 +68,17 @@ docker compose --profile geocode run --rm geocode
 
 # 4. Lägg till terroir-data (kör en gång)
 docker compose --profile terroir run --rm terroir
+
+# 5. Kör autentiserings-migration (lägger till is_admin kolumn)
+python migrate_admin.py
+# Ange lösenord för admin-användaren när du blir tillfrågad
 ```
 
 Öppna sedan **http://localhost:3000**
+
+**Standard admin-inloggning:**
+- Användarnamn: `admin`
+- Lösenord: (det du angav i steg 5)
 
 API-dokumentation: **http://localhost:8080/docs**
 
@@ -77,6 +88,7 @@ API-dokumentation: **http://localhost:8080/docs**
 ```bash
 cd backend
 pip install -r requirements.txt
+# Lägg till SECRET_KEY i backend/.env (se .env i root-katalogen)
 uvicorn main:app --reload  # port 8000
 ```
 
@@ -84,6 +96,7 @@ uvicorn main:app --reload  # port 8000
 ```bash
 cd frontend
 npm install
+# Lägg till VITE_API_URL=http://localhost:8000 i frontend/.env
 npm run dev  # port 5173
 ```
 
@@ -93,6 +106,7 @@ docker compose up db -d
 python seed.py           # seed data
 python geocode.py        # add coordinates
 python terroir.py        # add terroir
+python migrate_admin.py  # setup auth (kör en gång)
 ```
 
 ## Projektstruktur
@@ -102,19 +116,27 @@ bourgogne/
 ├── backend/
 │   ├── main.py              # FastAPI app
 │   ├── database.py          # DB connection pool
+│   ├── auth.py              # JWT authentication utilities
 │   └── routers/
+│       ├── auth.py          # Login, register, /me
+│       ├── admin.py         # Admin user management
 │       ├── crus.py          # Cru endpoints (list, get, create, update)
-│       ├── notes.py         # Tasting note CRUD
-│       └── stats.py         # Stats (counts)
+│       └── notes.py         # Tasting note CRUD
 ├── frontend/
 │   ├── src/
 │   │   ├── App.jsx          # Router + topbar
 │   │   ├── api.js           # API client
+│   │   ├── auth.js          # Token/user storage
+│   │   ├── contexts/
+│   │   │   └── AuthContext.jsx   # Auth state management
 │   │   ├── pages/
-│   │   │   ├── HomePage.jsx # Card grid + filters
-│   │   │   ├── CruPage.jsx  # Detail view + terroir edit
-│   │   │   └── MapPage.jsx  # Leaflet map
+│   │   │   ├── HomePage.jsx      # Card grid + filters
+│   │   │   ├── CruPage.jsx       # Detail view + community ratings
+│   │   │   ├── MapPage.jsx       # Leaflet map
+│   │   │   ├── LoginPage.jsx     # Login/register
+│   │   │   └── AdminPage.jsx     # User management
 │   │   └── components/
+│   │       ├── ProtectedRoute.jsx # Auth guard
 │   │       ├── NoteForm.jsx       # Tasting note form
 │   │       ├── TerroirForm.jsx    # Terroir edit form
 │   │       ├── AddCruForm.jsx     # New cru form
@@ -132,13 +154,18 @@ bourgogne/
 ## Databas
 
 **Tabeller:**
-- `app_user` — Användare (single-user MVP, default: admin)
+- `app_user` — Användare med JWT-autentisering, bcrypt-hashade lösenord, is_admin flagga
 - `cru` — Alla Premier & Grand Crus med terroir + geografi
-- `tasting_note` — Provanteckningar med årgång, datum, betyg, fri text
+- `tasting_note` — Provanteckningar med årgång, datum, betyg, fri text (user_id FK)
 
 **PostGIS:**
 - Automatisk `geom` kolumn (geography) från lat/lon
 - GIST index för spatial queries
+
+**Autentisering:**
+- JWT tokens med 7 dagars expiration
+- Bcrypt password hashing (cost factor 12)
+- OAuth2PasswordBearer schema
 
 ## Data källor
 
@@ -149,12 +176,43 @@ bourgogne/
 
 ## Migrations
 
+### Terroir-migration (för äldre databaser)
 Om du redan har en databas och vill lägga till terroir-kolumner:
-
 ```bash
 python migrate_terroir.py
 python terroir.py  # populate data
 ```
+
+### Auth-migration (OBLIGATORISK för multi-user)
+Lägger till `is_admin` kolumn och sätter admin-lösenord:
+```bash
+python migrate_admin.py
+# Ange säkert lösenord när du blir tillfrågad
+```
+
+**VIKTIGT:** Glöm inte att lägga till `SECRET_KEY` i `.env` filen!
+
+## Autentisering & Användare
+
+### Registrera ny användare
+1. Gå till inloggningssidan
+2. Klicka på "Registrera"-fliken
+3. Fyll i användarnamn, e-post och lösenord (minst 8 tecken)
+4. Logga in med dina nya credentials
+
+### Admin-funktioner
+Administratörer kan:
+- **Skapa nya användare** (med möjlighet att sätta admin-status)
+- **Lista alla användare** med sökfunktion
+- **Återställa lösenord** för andra användare
+- **Ta bort användare** (förutom sig själva)
+
+Gå till Admin-panelen via "Admin"-länken i topbar (endast synlig för admins).
+
+### Användarspecifika funktioner
+- **Personliga provanteckningar** — varje användare ser bara sina egna anteckningar
+- **"Provade"-filter** — visar endast crus DU har provsmakat
+- **Community-betyg** — se genomsnittliga betyg från ALLA användare på cru-detaljsidan
 
 ## Användning
 
@@ -239,11 +297,22 @@ docker compose up -d
 
 Alla känsliga credentials lagras i `.env` filen som **inte** checkas in i git.
 
+**Obligatoriska miljövariabler:**
+```env
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/bourgogne
+
+# JWT Authentication (generera med: openssl rand -hex 32)
+SECRET_KEY=din-hemliga-nyckel-här
+```
+
 **Viktiga säkerhetsåtgärder:**
-- Ändra alltid standardlösenordet i `.env` för produktion
+- Använd en stark, slumpmässig `SECRET_KEY` (generera med `openssl rand -hex 32`)
+- Ändra alltid standardlösenordet för admin-användaren
 - Exponera aldrig PostgreSQL-porten (5432) till internet
-- Använd starka lösenord för produktionsmiljöer
+- Använd starka lösenord för alla användare i produktionsmiljöer
 - `.env` är listad i `.gitignore` och ska aldrig committas
+- JWT tokens lagras i browser localStorage (acceptabelt för personlig app)
 
 ### Credential rotation
 

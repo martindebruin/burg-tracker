@@ -1,10 +1,27 @@
+import { getToken, logout } from './auth'
+
 const BASE = import.meta.env.VITE_API_URL || "/api";
 
 async function req(path, options = {}) {
+  const token = getToken()
+  console.log('[API] Request to:', path, 'Token:', token ? token.substring(0, 20) + '...' : 'NONE')
+  const headers = {
+    "Content-Type": "application/json",
+    ...(token ? { "Authorization": `Bearer ${token}` } : {})
+  }
+
   const res = await fetch(`${BASE}${path}`, {
-    headers: { "Content-Type": "application/json" },
+    headers,
     ...options,
   });
+
+  // Handle 401 - redirect to login
+  if (res.status === 401) {
+    logout()
+    window.location.href = '/login'
+    throw new Error('Authentication required')
+  }
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.detail || `HTTP ${res.status}`);
@@ -14,6 +31,41 @@ async function req(path, options = {}) {
 }
 
 export const api = {
+  // Auth
+  register: (data) => req("/auth/register", { method: "POST", body: JSON.stringify(data) }),
+  login: (username, password) => {
+    console.log('[API] login attempt for:', username)
+    const formData = new URLSearchParams()
+    formData.append('username', username)
+    formData.append('password', password)
+    return fetch(`${BASE}/auth/login`, {
+      method: 'POST',
+      body: formData,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    }).then(res => {
+      console.log('[API] login response status:', res.status)
+      if (!res.ok) throw new Error('Login failed')
+      return res.json()
+    }).then(data => {
+      console.log('[API] login success, got token')
+      return data
+    })
+  },
+  getMe: () => req("/auth/me"),
+
+  // Admin
+  createUser: (data) => req("/admin/users", { method: "POST", body: JSON.stringify(data) }),
+  getUsers: (params = {}) => {
+    const qs = new URLSearchParams(params).toString()
+    return req(`/admin/users${qs ? '?' + qs : ''}`)
+  },
+  updateUser: (id, data) => req(`/admin/users/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+  deleteUser: (id) => req(`/admin/users/${id}`, { method: "DELETE" }),
+  resetUserPassword: (id, password) => req(`/admin/users/${id}/reset-password`, {
+    method: "POST",
+    body: JSON.stringify({ new_password: password })
+  }),
+
   // Crus
   getCrus: (params = {}) => {
     const qs = new URLSearchParams(
@@ -27,6 +79,7 @@ export const api = {
   getSubregions: () => req("/crus/subregions"),
   getCommunes: (subregion) =>
     req(`/crus/communes${subregion ? `?subregion=${encodeURIComponent(subregion)}` : ""}`),
+  getCommunityNotes: (cruId) => req(`/crus/${cruId}/community`),
 
   // Notes
   getNotes: (cru_id) => req(`/notes${cru_id ? `?cru_id=${cru_id}` : ""}`),

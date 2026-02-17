@@ -1,12 +1,11 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, field_validator
 from typing import Optional
 from datetime import date
 from database import db
+from auth import get_current_user
 
 router = APIRouter(prefix="/notes", tags=["notes"])
-
-DEFAULT_USER = 1
 
 
 class NoteIn(BaseModel):
@@ -32,7 +31,7 @@ class NoteIn(BaseModel):
 
 
 @router.get("")
-def list_notes(cru_id: Optional[int] = None):
+def list_notes(cru_id: Optional[int] = None, user = Depends(get_current_user)):
     with db() as conn:
         cur = conn.cursor()
         if cru_id:
@@ -42,7 +41,7 @@ def list_notes(cru_id: Optional[int] = None):
                 JOIN cru c ON c.id = tn.cru_id
                 WHERE tn.user_id = %s AND tn.cru_id = %s
                 ORDER BY tn.tasted_on DESC
-            """, (DEFAULT_USER, cru_id))
+            """, (user["id"], cru_id))
         else:
             cur.execute("""
                 SELECT tn.*, c.name AS cru_name, c.commune, c.type AS cru_type, c.subregion
@@ -50,12 +49,12 @@ def list_notes(cru_id: Optional[int] = None):
                 JOIN cru c ON c.id = tn.cru_id
                 WHERE tn.user_id = %s
                 ORDER BY tn.tasted_on DESC
-            """, (DEFAULT_USER,))
+            """, (user["id"],))
         return [dict(r) for r in cur.fetchall()]
 
 
 @router.post("", status_code=201)
-def create_note(note: NoteIn):
+def create_note(note: NoteIn, user = Depends(get_current_user)):
     with db() as conn:
         cur = conn.cursor()
         # Verify cru exists
@@ -69,7 +68,7 @@ def create_note(note: NoteIn):
                 INSERT INTO tasting_note (user_id, cru_id, vintage, tasted_on, rating, notes)
                 VALUES (%s, %s, %s, %s, %s, %s)
                 RETURNING *
-            """, (DEFAULT_USER, note.cru_id, note.vintage, tasted_on, note.rating, note.notes))
+            """, (user["id"], note.cru_id, note.vintage, tasted_on, note.rating, note.notes))
             return dict(cur.fetchone())
         except Exception as e:
             if "unique" in str(e).lower():
@@ -78,7 +77,7 @@ def create_note(note: NoteIn):
 
 
 @router.put("/{note_id}")
-def update_note(note_id: int, note: NoteIn):
+def update_note(note_id: int, note: NoteIn, user = Depends(get_current_user)):
     with db() as conn:
         cur = conn.cursor()
         cur.execute("""
@@ -87,7 +86,7 @@ def update_note(note_id: int, note: NoteIn):
             WHERE id = %s AND user_id = %s
             RETURNING *
         """, (note.vintage, note.tasted_on or date.today(), note.rating, note.notes,
-              note_id, DEFAULT_USER))
+              note_id, user["id"]))
         row = cur.fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="Note not found")
@@ -95,12 +94,12 @@ def update_note(note_id: int, note: NoteIn):
 
 
 @router.delete("/{note_id}", status_code=204)
-def delete_note(note_id: int):
+def delete_note(note_id: int, user = Depends(get_current_user)):
     with db() as conn:
         cur = conn.cursor()
         cur.execute(
             "DELETE FROM tasting_note WHERE id = %s AND user_id = %s",
-            (note_id, DEFAULT_USER)
+            (note_id, user["id"])
         )
         if cur.rowcount == 0:
             raise HTTPException(status_code=404, detail="Note not found")

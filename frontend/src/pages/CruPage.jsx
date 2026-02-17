@@ -9,6 +9,7 @@ export function CruPage() {
   const { id } = useParams();
   const [cru, setCru] = useState(null);
   const [notes, setNotes] = useState([]);
+  const [communityData, setCommunityData] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
   const [editingTerroir, setEditingTerroir] = useState(false);
@@ -17,10 +18,15 @@ export function CruPage() {
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([api.getCru(id), api.getNotes(parseInt(id))])
-      .then(([cruData, notesData]) => {
+    Promise.all([
+      api.getCru(id),
+      api.getNotes(parseInt(id)),
+      api.getCommunityNotes(parseInt(id))
+    ])
+      .then(([cruData, notesData, communityData]) => {
         setCru(cruData);
         setNotes(notesData);
+        setCommunityData(communityData);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -203,6 +209,79 @@ export function CruPage() {
           </div>
         ))
       )}
+
+      {/* Community ratings */}
+      <div className="card" style={{ marginTop: '2rem' }}>
+        <h2>Community-betyg</h2>
+        {communityData?.rating_count > 0 ? (
+          <>
+            <div style={{
+              display: 'flex',
+              gap: '2rem',
+              padding: '1.5rem',
+              background: 'linear-gradient(155deg, #fff8e8 0%, #faecd0 100%)',
+              borderRadius: '16px',
+              marginBottom: '1.5rem'
+            }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '0.85rem', color: '#6b7280', marginBottom: '0.5rem' }}>
+                  Genomsnittligt betyg
+                </div>
+                <div style={{ fontSize: '1.8rem', fontWeight: 600, color: '#6b2737' }}>
+                  {communityData.avg_rating?.toFixed(1) || 'N/A'}
+                </div>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '0.85rem', color: '#6b7280', marginBottom: '0.5rem' }}>
+                  Antal bedömningar
+                </div>
+                <div style={{ fontSize: '1.8rem', fontWeight: 600, color: '#6b2737' }}>
+                  {communityData.rating_count}
+                </div>
+              </div>
+            </div>
+
+            <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Alla anteckningar</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {communityData.notes.map(note => (
+                <div
+                  key={note.id}
+                  style={{
+                    background: '#f9fafb',
+                    padding: '1rem',
+                    borderRadius: '12px',
+                    border: '1px solid #e5e7eb'
+                  }}
+                >
+                  <div style={{
+                    display: 'flex',
+                    gap: '1rem',
+                    marginBottom: '0.5rem',
+                    fontSize: '0.9rem',
+                    color: '#6b7280',
+                    flexWrap: 'wrap'
+                  }}>
+                    <strong style={{ color: '#111827' }}>👤 {note.user.username}</strong>
+                    {note.vintage && <span>Årgång {note.vintage}</span>}
+                    <span>{new Date(note.tasted_on).toLocaleDateString('sv-SE')}</span>
+                    {note.rating !== null && (
+                      <span style={{
+                        color: note.rating >= 1 ? '#059669' : note.rating <= -1 ? '#dc2626' : '#6b7280',
+                        fontWeight: 600
+                      }}>
+                        {note.rating > 0 ? '+' : ''}{note.rating}
+                      </span>
+                    )}
+                  </div>
+                  {note.notes && <p style={{ margin: 0, fontSize: '0.95rem' }}>{note.notes}</p>}
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <p className="empty">Inga community-anteckningar ännu. Var först med att provsmaka!</p>
+        )}
+      </div>
     </div>
   );
 }
