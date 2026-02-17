@@ -11,6 +11,9 @@ En personlig app för att utforska och dokumentera burgundiska crus — Premier 
 - **Multi-user autentisering** med JWT — registrera, logga in, personliga anteckningar
 - **Admin-panel** — hantera användare, återställ lösenord, skapa nya användare
 - **Community-betyg** — se genomsnittliga betyg från alla användare på varje cru
+- **Recensionsaggregering** — filtrera alla recensioner efter färg (röda/vita viner) med statistik och topplista
+- **Användarprofiler** — anpassningsbara profiler med bio, social media-länkar (Mastodon, Bluesky, Vivino, CellarTracker, Delectable), och topp 3 röda/vita viner
+- **Redigera viner** — uppdatera vindetaljer (namn, färg, typ, subregion, kommun) direkt från vinsidan
 - **Interaktiv karta** med Leaflet — visualisera alla crus med färgkodade pins (Grand Cru i burgundy, Premier Cru i guld)
 - **Terroir-data** för varje cru: jordmån, höjd, exponering, areal, klimatnoteringar (på svenska)
 - **Provanteckningar** med −2 till +2 betyg (0 = som förväntat)
@@ -24,7 +27,7 @@ En personlig app för att utforska och dokumentera burgundiska crus — Premier 
 - Modern sans-serif typografi (Inter)
 - Färgkodade kort: Grand Cru = varm rosa/lavendel, Premier Cru = kall blå, Provade = guld
 - Avrundade "orb"-kort med gradients och glödande skuggor
-- Sticky topbar med gradient och guld-accentlinje
+- Animerad topbar med burgundy-gradient, guldaccenter, och glassmorfism-effekter
 - Helt på svenska
 
 ## Stack
@@ -120,6 +123,8 @@ bourgogne/
 │   └── routers/
 │       ├── auth.py          # Login, register, /me
 │       ├── admin.py         # Admin user management
+│       ├── users.py         # User profiles and top wines
+│       ├── reviews.py       # Review aggregation by color
 │       ├── crus.py          # Cru endpoints (list, get, create, update)
 │       └── notes.py         # Tasting note CRUD
 ├── frontend/
@@ -130,23 +135,28 @@ bourgogne/
 │   │   ├── contexts/
 │   │   │   └── AuthContext.jsx   # Auth state management
 │   │   ├── pages/
-│   │   │   ├── HomePage.jsx      # Card grid + filters
-│   │   │   ├── CruPage.jsx       # Detail view + community ratings
-│   │   │   ├── MapPage.jsx       # Leaflet map
-│   │   │   ├── LoginPage.jsx     # Login/register
-│   │   │   └── AdminPage.jsx     # User management
+│   │   │   ├── HomePage.jsx          # Card grid + filters
+│   │   │   ├── CruPage.jsx           # Detail view + community ratings + wine editing
+│   │   │   ├── ReviewsPage.jsx       # Review aggregation by color
+│   │   │   ├── UserProfilePage.jsx   # User profile with social links
+│   │   │   ├── MapPage.jsx           # Leaflet map
+│   │   │   ├── LoginPage.jsx         # Login/register
+│   │   │   └── AdminPage.jsx         # User management
 │   │   └── components/
-│   │       ├── ProtectedRoute.jsx # Auth guard
-│   │       ├── NoteForm.jsx       # Tasting note form
-│   │       ├── TerroirForm.jsx    # Terroir edit form
-│   │       ├── AddCruForm.jsx     # New cru form
-│   │       └── RatingWidget.jsx   # −2…+2 rating buttons
+│   │       ├── ProtectedRoute.jsx    # Auth guard
+│   │       ├── NoteForm.jsx          # Tasting note form
+│   │       ├── TerroirForm.jsx       # Terroir edit form
+│   │       ├── CruEditForm.jsx       # Wine details edit form
+│   │       ├── AddCruForm.jsx        # New cru form
+│   │       └── RatingWidget.jsx      # −2…+2 rating buttons
 │   └── index.css            # Custom styles
 ├── schema.sql               # PostgreSQL schema with PostGIS
 ├── seed.py                  # Populate crus from Wikipedia + CSV
 ├── geocode.py               # Nominatim geocoding (commune-level)
 ├── terroir.py               # Terroir data (Swedish)
 ├── migrate_terroir.py       # Add terroir columns to existing DB
+├── migrate_admin.py         # Add is_admin column and set admin password
+├── migrate_profile.py       # Add user profile columns (nickname, bio, social links)
 ├── cleanup_communes.py      # Remove [a], [b] variants
 └── docker-compose.yml       # All services + seed/geocode/terroir profiles
 ```
@@ -192,6 +202,12 @@ python migrate_admin.py
 
 **VIKTIGT:** Glöm inte att lägga till `SECRET_KEY` i `.env` filen!
 
+### Profile-migration
+Lägger till användarprofil-kolumner (nickname, bio, social media-länkar):
+```bash
+python migrate_profile.py
+```
+
 ## Autentisering & Användare
 
 ### Registrera ny användare
@@ -221,8 +237,20 @@ Gå till Admin-panelen via "Admin"-länken i topbar (endast synlig för admins).
 - Filtrera efter typ (Grand/Premier), delregion, kommun, provad/ej provad
 - Sök efter namn eller kommun
 
+### Recensionsaggregering
+- Klicka "🍷 Recensioner" i topbar
+- Välj mellan röda och vita viner
+- Se statistik: totalt antal recensioner, unika viner, genomsnittsbetyg, antal recensenter
+- Bläddra bland topplistade viner och alla recensioner
+
+### Användarprofiler
+- Klicka på ditt användarnamn eller "Min profil" i topbar
+- Redigera din profil: nickname, bio, sociala media-länkar
+- Dina topp 3 röda och vita viner visas automatiskt baserat på dina betyg
+- Besök andra användares profiler genom att klicka på deras användarnamn
+
 ### Kartvyn
-- Klicka "Karta" i topbar
+- Klicka "🗺 Karta" i topbar
 - Pins färgade efter typ (burgundy = Grand, guld = Premier)
 - Fylld = provad, outline = ej provad
 - Klicka på pin för popup med länk till detalj
@@ -233,9 +261,15 @@ Gå till Admin-panelen via "Admin"-länken i topbar (endast synlig för admins).
 3. Fyll i årgång, datum, betyg (−2…+2), anteckningar
 4. Spara
 
+### Redigera vin
+1. Gå till en vinsida
+2. Klicka "✏️ Redigera" i huvudsektionen
+3. Uppdatera namn, färg, typ, subregion, kommun
+4. Spara — ändringarna reflekteras omedelbart
+
 ### Redigera terroir
 1. Gå till en cru-detaljsida
-2. Klicka "Redigera" i Terroir-sektionen
+2. Klicka "✏️ Redigera" i Terroir-sektionen
 3. Uppdatera jordmån, höjd, exponering, areal, klimat, koordinater
 4. Spara
 
