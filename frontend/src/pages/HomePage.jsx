@@ -166,6 +166,16 @@ export function HomePage() {
         </div>
 
         <div className="filter-row">
+          <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.85rem", cursor: "pointer", marginRight: "0.75rem" }}>
+            <input
+              type="checkbox"
+              checked={tastedFilter === true}
+              onChange={(e) => setTastedFilter(e.target.checked ? true : null)}
+              style={{ width: "auto", cursor: "pointer" }}
+            />
+            Visa endast provade
+          </label>
+
           <span className="filter-group-label">Typ</span>
           <button
             className={`filter-pill${type === "grand" ? " active" : ""}`}
@@ -180,7 +190,7 @@ export function HomePage() {
             Premier Cru
           </button>
 
-          <span className="filter-group-label" style={{ marginLeft: "0.5rem" }}>Provad</span>
+          <span className="filter-group-label" style={{ marginLeft: "0.5rem" }}>Status</span>
           <button
             className={`filter-pill${tastedFilter === true ? " active" : ""}`}
             onClick={() => setTastedFilter(tastedFilter === true ? null : true)}
