@@ -3,17 +3,19 @@ services:
     image: postgis/postgis:16-3.4
     container_name: bourgogne-postgis
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: bourgogne
-      POSTGRES_USER: martin
-      POSTGRES_PASSWORD: expensivewino
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
       - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U martin -d bourgogne"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -24,8 +26,10 @@ services:
       dockerfile: backend/Dockerfile
     container_name: bourgogne-api
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      DATABASE_URL: postgresql://martin:expensivewino@db:5432/bourgogne
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     ports:
       - "8080:8000"
     depends_on:
@@ -39,8 +43,10 @@ services:
     image: bourgogne-backend  # reuse the same image as backend
     container_name: bourgogne-seed
     restart: "no"
+    env_file:
+      - .env
     environment:
-      DATABASE_URL: postgresql://martin:expensivewino@db:5432/bourgogne
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     command: python seed.py
     depends_on:
       db:
@@ -52,8 +58,10 @@ services:
     image: bourgogne-backend
     container_name: bourgogne-geocode
     restart: "no"
+    env_file:
+      - .env
     environment:
-      DATABASE_URL: postgresql://martin:expensivewino@db:5432/bourgogne
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     command: python geocode.py
     depends_on:
       db:
@@ -65,8 +73,10 @@ services:
     image: bourgogne-backend
     container_name: bourgogne-terroir
     restart: "no"
+    env_file:
+      - .env
     environment:
-      DATABASE_URL: postgresql://martin:expensivewino@db:5432/bourgogne
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     command: python terroir.py
     depends_on:
       db:
@@ -78,8 +88,10 @@ services:
     image: bourgogne-backend
     container_name: bourgogne-migrate
     restart: "no"
+    env_file:
+      - .env
     environment:
-      DATABASE_URL: postgresql://martin:expensivewino@db:5432/bourgogne
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     command: python migrate_terroir.py
     depends_on:
       db:

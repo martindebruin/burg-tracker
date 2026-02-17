@@ -34,7 +34,24 @@ En personlig app för att utforska och dokumentera burgundiska crus — Premier 
 
 ## Kom igång
 
-### Kör allt i Docker (rekommenderat)
+### 1. Konfigurera miljövariabler
+
+Kopiera `.env.example` till `.env` och uppdatera med dina credentials:
+
+```bash
+cp .env.example .env
+```
+
+Redigera `.env` och sätt dina databas-credentials:
+```env
+POSTGRES_USER=ditt_användarnamn
+POSTGRES_PASSWORD=ditt_säkra_lösenord
+POSTGRES_DB=bourgogne
+```
+
+**VIKTIGT**: Ändra lösenordet från standardvärdet för produktion!
+
+### 2. Kör allt i Docker (rekommenderat)
 
 ```bash
 # 1. Bygg och starta alla tjänster
@@ -215,6 +232,24 @@ npm run build  # → dist/
 docker compose build backend frontend
 docker compose up -d
 ```
+
+## Säkerhet
+
+### Miljövariabler
+
+Alla känsliga credentials lagras i `.env` filen som **inte** checkas in i git.
+
+**Viktiga säkerhetsåtgärder:**
+- Ändra alltid standardlösenordet i `.env` för produktion
+- Exponera aldrig PostgreSQL-porten (5432) till internet
+- Använd starka lösenord för produktionsmiljöer
+- `.env` är listad i `.gitignore` och ska aldrig committas
+
+### Credential rotation
+
+Om credentials har läckt:
+1. Ändra lösenord i `.env`
+2. Återskapa Docker-containers: `docker compose down -v && docker compose up -d --build`
 
 ## Licens
 

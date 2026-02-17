@@ -9,11 +9,17 @@ Or via Docker:
 """
 import os
 import psycopg2
+from dotenv import load_dotenv
 
-DATABASE_URL = os.environ.get(
-    "DATABASE_URL",
-    "postgresql://martin:expensivewino@localhost:5432/bourgogne",
-)
+load_dotenv()
+
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise RuntimeError(
+        "DATABASE_URL environment variable is required. "
+        "Copy .env.example to .env and configure your credentials."
+    )
 
 
 def run():

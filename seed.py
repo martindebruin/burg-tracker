@@ -17,12 +17,18 @@ import time
 import psycopg2
 import requests
 from bs4 import BeautifulSoup
+from dotenv import load_dotenv
 
-# Support both DATABASE_URL (docker) and legacy DSN (local dev)
-_DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://martin:expensivewino@localhost:5432/bourgogne"
-)
+load_dotenv()
+
+# Get DATABASE_URL from environment
+_DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not _DATABASE_URL:
+    raise RuntimeError(
+        "DATABASE_URL environment variable is required. "
+        "Copy .env.example to .env and configure your credentials."
+    )
 
 # Convert postgres:// → postgresql:// (psycopg2 needs the latter)
 DB_DSN = _DATABASE_URL.replace("postgres://", "postgresql://", 1)
