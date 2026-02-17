@@ -1,11 +1,11 @@
-# 🍷 Bourgogne Wine Tracker
+# Burg Tracker
 
 En personlig app för att utforska och dokumentera burgundiska crus — Premier och Grand Crus med provanteckningar, terroir-information och interaktiv karta.
 
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Language](https://img.shields.io/badge/UI-Svenska-green)
 
-## ✨ Funktioner
+## Funktioner
 
 - **490+ Premier & Grand Crus** från Côte d'Or och Chablis
 - **Interaktiv karta** med Leaflet — visualisera alla crus med färgkodade pins (Grand Cru i burgundy, Premier Cru i guld)
@@ -16,15 +16,15 @@ En personlig app för att utforska och dokumentera burgundiska crus — Premier 
 - **Redigera terroir & koordinater** direkt i UI:t
 - **Lägg till nya crus** via formulär
 
-## 🎨 Design
+## Design
 
 - Modern sans-serif typografi (Inter)
 - Färgkodade kort: Grand Cru = varm rosa/lavendel, Premier Cru = kall blå, Provade = guld
 - Avrundade "orb"-kort med gradients och glödande skuggor
 - Sticky topbar med gradient och guld-accentlinje
-- Helt på svenska 🇸🇪
+- Helt på svenska
 
-## 🏗 Stack
+## Stack
 
 - **DB**: PostgreSQL 16 + PostGIS (geografi & geocoding)
 - **Backend**: FastAPI (Python 3.12) på port 8000
@@ -32,7 +32,7 @@ En personlig app för att utforska och dokumentera burgundiska crus — Premier 
 - **Kartor**: Leaflet + react-leaflet med OpenStreetMap tiles
 - **Styling**: Custom CSS med Inter font från Google Fonts
 
-## 🚀 Kom igång
+## Kom igång
 
 ### Kör allt i Docker (rekommenderat)
 
@@ -78,7 +78,7 @@ python geocode.py        # add coordinates
 python terroir.py        # add terroir
 ```
 
-## 📦 Projektstruktur
+## Projektstruktur
 
 ```
 bourgogne/
@@ -112,7 +112,7 @@ bourgogne/
 └── docker-compose.yml       # All services + seed/geocode/terroir profiles
 ```
 
-## 🗂 Databas
+## Databas
 
 **Tabeller:**
 - `app_user` — Användare (single-user MVP, default: admin)
@@ -123,14 +123,14 @@ bourgogne/
 - Automatisk `geom` kolumn (geography) från lat/lon
 - GIST index för spatial queries
 
-## 🌍 Data källor
+## Data källor
 
 - **Grand Crus**: Wikipedia (37 st)
 - **Premier Crus**: `recherche_produit.csv` från INAO/Bivb (460+ st)
 - **Geocoding**: Nominatim (OpenStreetMap) + manuella overrides
 - **Terroir**: Handkurerad data på svenska för 27 kommuner
 
-## 🛠 Migrations
+## Migrations
 
 Om du redan har en databas och vill lägga till terroir-kolumner:
 
@@ -139,7 +139,7 @@ python migrate_terroir.py
 python terroir.py  # populate data
 ```
 
-## 🎯 Användning
+## Användning
 
 ### Bläddra bland crus
 - Se alla crus som kort (3 per rad)
@@ -160,7 +160,7 @@ python terroir.py  # populate data
 
 ### Redigera terroir
 1. Gå till en cru-detaljsida
-2. Klicka "✏️ Redigera" i Terroir-sektionen
+2. Klicka "Redigera" i Terroir-sektionen
 3. Uppdatera jordmån, höjd, exponering, areal, klimat, koordinater
 4. Spara
 
@@ -170,7 +170,7 @@ python terroir.py  # populate data
 3. Valfritt: lägg till färg, koordinater, terroir
 4. Spara → omdirigeras till detalj
 
-## 🔄 Reset database
+## Reset database
 
 ```bash
 docker compose down -v
@@ -180,7 +180,7 @@ docker compose --profile geocode run --rm geocode
 docker compose --profile terroir run --rm terroir
 ```
 
-## 📊 Betyg-skala
+## Betyg-skala
 
 | Värde | Betydelse |
 |-------|-----------|
@@ -190,7 +190,7 @@ docker compose --profile terroir run --rm terroir
 | +1 | Över förväntan |
 | +2 | Exceptionellt |
 
-## 🔌 Portar
+## Portar
 
 | Tjänst  | Port | Beskrivning |
 |---------|------|-------------|
@@ -198,7 +198,7 @@ docker compose --profile terroir run --rm terroir
 | Backend | 8080 | FastAPI (proxied via nginx) |
 | Frontend| 3000 | React (nginx) |
 
-## 🧪 Utveckling
+## Utveckling
 
 **Hot reload:**
 - Backend: `uvicorn main:app --reload`
@@ -216,11 +216,11 @@ docker compose build backend frontend
 docker compose up -d
 ```
 
-## 📝 Licens
+## Licens
 
 MIT
 
-## 🙏 Erkännanden
+## Erkännanden
 
 - **INAO/Bivb** för Premier Cru-data
 - **Wikipedia** för Grand Cru-lista
@@ -229,4 +229,4 @@ MIT
 
 ---
 
-**Skål!** 🍇
+**Skål!**
