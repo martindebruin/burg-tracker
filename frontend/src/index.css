@@ -1,0 +1,623 @@
+*, *::before, *::after { box-sizing: border-box; }
+
+:root {
+  --burgundy:     #6b1d2a;
+  --burgundy-lt:  #8e2a3b;
+  --gold:         #c8a96e;
+  --cream:        #f2f5fc;
+  --card-bg:      #ffffff;
+  --border:       #dde3f0;
+  --text:         #1e2030;
+  --muted:        #7a84a0;
+  --tasted-bg:    #fdf4e3;
+  --rating-pos:   #1e7a4e;
+  --rating-neg:   #a53030;
+  --radius:       12px;
+  font-size: 15px;
+}
+
+body {
+  margin: 0;
+  background: var(--cream);
+  color: var(--text);
+  font-family: "Inter", sans-serif;
+  line-height: 1.6;
+}
+
+a { color: var(--burgundy); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+h1, h2, h3 { font-family: "Inter", sans-serif; font-weight: 600; }
+h1 { font-size: 1.8rem; margin: 0; }
+h2 { font-size: 1.3rem; margin: 0 0 1rem; }
+
+button {
+  cursor: pointer;
+  font-family: "Inter", sans-serif;
+  font-size: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.45rem 1rem;
+  background: white;
+  color: var(--text);
+  transition: background 0.15s;
+}
+button:hover { background: var(--tasted-bg); }
+
+button.primary {
+  background: var(--burgundy);
+  color: white;
+  border-color: var(--burgundy);
+}
+button.primary:hover { background: var(--burgundy-lt); }
+
+button.danger {
+  background: #fff0f0;
+  border-color: #e07070;
+  color: #a53030;
+}
+button.danger:hover { background: #ffe0e0; }
+
+input, select, textarea {
+  font-family: "Inter", sans-serif;
+  font-size: 0.9rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: white;
+  color: var(--text);
+  width: 100%;
+}
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--burgundy);
+  outline-offset: 1px;
+}
+textarea { resize: vertical; min-height: 80px; }
+
+/* Layout */
+.layout { display: flex; flex-direction: column; min-height: 100vh; }
+
+/* Topbar */
+.topbar {
+  background: linear-gradient(120deg, #4a1020 0%, #6b1d2a 45%, #7d2535 100%);
+  color: white;
+  padding: 0 2rem;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  box-shadow: 0 2px 16px rgba(107,29,42,0.35);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.topbar::after {
+  content: "";
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), #e8c98a, var(--gold), transparent);
+}
+.topbar-brand {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: white !important;
+  text-decoration: none !important;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+.topbar-brand:hover { text-decoration: none !important; opacity: 0.9; }
+.topbar-nav {
+  display: flex;
+  gap: 0.35rem;
+}
+.nav-link {
+  color: rgba(255,255,255,0.8) !important;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.4rem 0.9rem;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.18);
+  text-decoration: none !important;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.nav-link:hover {
+  background: rgba(255,255,255,0.14);
+  border-color: rgba(255,255,255,0.35);
+  color: white !important;
+  text-decoration: none !important;
+}
+.topbar-stats {
+  margin-left: auto;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.stat-chip {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.7rem;
+  border-radius: 20px;
+  letter-spacing: 0.01em;
+}
+.stat-chip-grand  { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.2); }
+.stat-chip-premier { background: rgba(200,169,110,0.25); color: #f0d898; border: 1px solid rgba(200,169,110,0.3); }
+.stat-chip-tasted { background: rgba(46,160,90,0.22); color: #7ee8a2; border: 1px solid rgba(46,160,90,0.3); }
+
+.page { max-width: 1200px; margin: 0 auto; padding: 1.5rem 2rem; }
+
+/* Cards & table */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Cru list table */
+.cru-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.cru-table th {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 2px solid var(--border);
+  color: var(--muted);
+  font-weight: normal;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.cru-table td {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.cru-table tr:last-child td { border-bottom: none; }
+.cru-table tr.tasted { background: var(--tasted-bg); }
+.cru-table tr:hover td { background: #f5f0ea; cursor: pointer; }
+.cru-table tr.tasted:hover td { background: #ece4d9; }
+
+/* Badges */
+.badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 20px;
+  font-family: sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+.badge-grand { background: var(--burgundy); color: white; }
+.badge-premier { background: var(--gold); color: #2c2420; }
+.badge-tasted { background: #d4edda; color: #155724; }
+.badge-color { background: #e8e0d5; color: var(--muted); }
+
+/* Rating display */
+.rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: sans-serif;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.rating-pos { color: var(--rating-pos); }
+.rating-neg { color: var(--rating-neg); }
+.rating-zero { color: var(--muted); }
+
+/* Rating widget (5 buttons: -2 -1 0 +1 +2) */
+.rating-widget {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+.rating-widget button {
+  width: 2.2rem;
+  height: 2.2rem;
+  padding: 0;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.85rem;
+  font-family: sans-serif;
+  border: 2px solid var(--border);
+}
+.rating-widget button.active-pos {
+  background: var(--rating-pos);
+  border-color: var(--rating-pos);
+  color: white;
+}
+.rating-widget button.active-neg {
+  background: var(--rating-neg);
+  border-color: var(--rating-neg);
+  color: white;
+}
+.rating-widget button.active-zero {
+  background: var(--muted);
+  border-color: var(--muted);
+  color: white;
+}
+
+/* Filters bar */
+.filters {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+.filters input[type="text"] { max-width: 250px; }
+.filters select { max-width: 200px; }
+.filters .filter-toggle {
+  font-size: 0.85rem;
+  padding: 0.4rem 0.9rem;
+}
+.filters .filter-toggle.active {
+  background: var(--burgundy);
+  color: white;
+  border-color: var(--burgundy);
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+}
+
+/* Note card */
+.note-card {
+  border-left: 4px solid var(--gold);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  background: var(--tasted-bg);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  position: relative;
+}
+.note-card .note-meta {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-family: sans-serif;
+  margin-bottom: 0.4rem;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+.note-card .note-actions {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.75rem;
+  display: flex;
+  gap: 0.5rem;
+}
+.note-card .note-actions button {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.6rem;
+}
+
+/* Form */
+.note-form { display: flex; flex-direction: column; gap: 0.75rem; }
+.note-form .form-row { display: flex; gap: 0.75rem; }
+.note-form .form-row > * { flex: 1; }
+.form-label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-family: sans-serif;
+  margin-bottom: 0.3rem;
+}
+
+/* Misc */
+.muted { color: var(--muted); font-size: 0.85rem; }
+.page-title { margin-bottom: 1.5rem; display: flex; align-items: baseline; gap: 1rem; }
+.back-link { font-size: 0.85rem; color: var(--muted); }
+.back-link:hover { color: var(--burgundy); }
+.empty { text-align: center; padding: 2rem; color: var(--muted); font-style: italic; }
+
+/* ---- Cru card grid ---- */
+.cru-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.1rem;
+  margin-bottom: 1.5rem;
+}
+
+.cru-card {
+  border: none;
+  border-radius: 26px;
+  padding: 1.3rem 1.4rem 1.2rem;
+  cursor: pointer;
+  transition: box-shadow 0.22s, transform 0.18s;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Premier Cru — cool periwinkle blue */
+.cru-card.type-premier {
+  background: linear-gradient(155deg, #eaefff 0%, #dde6f8 100%);
+  box-shadow:
+    0 2px 10px rgba(80,110,200,0.12),
+    0 0 0 1.5px rgba(100,130,220,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.85);
+}
+.cru-card.type-premier:hover {
+  box-shadow:
+    0 12px 36px rgba(80,110,200,0.2),
+    0 0 0 1.5px rgba(100,130,220,0.25),
+    inset 0 1px 0 rgba(255,255,255,0.9);
+  transform: translateY(-4px) scale(1.013);
+}
+
+/* Grand Cru — warm rose-burgundy tint */
+.cru-card.type-grand {
+  background: linear-gradient(155deg, #fceef3 0%, #edddf5 100%);
+  box-shadow:
+    0 2px 10px rgba(150,60,100,0.1),
+    0 0 0 1.5px rgba(180,80,120,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.85);
+}
+.cru-card.type-grand:hover {
+  box-shadow:
+    0 12px 36px rgba(150,60,100,0.18),
+    0 0 0 1.5px rgba(180,80,120,0.26),
+    inset 0 1px 0 rgba(255,255,255,0.9);
+  transform: translateY(-4px) scale(1.013);
+}
+
+/* Tasted overlay — warm gold, overrides type */
+.cru-card.tasted {
+  background: linear-gradient(155deg, #fff8e8 0%, #faecd0 100%);
+  box-shadow:
+    0 2px 12px rgba(200,169,110,0.25),
+    0 0 0 1.5px rgba(200,169,110,0.32),
+    inset 0 1px 0 rgba(255,255,255,0.95);
+}
+.cru-card.tasted:hover {
+  box-shadow:
+    0 12px 36px rgba(200,169,110,0.4),
+    0 0 0 1.5px rgba(200,169,110,0.38),
+    inset 0 1px 0 rgba(255,255,255,0.98);
+  transform: translateY(-4px) scale(1.013);
+}
+.cru-card .card-terroir {
+  border-top-color: rgba(100,100,150,0.1);
+}
+.cru-card.tasted .card-terroir {
+  border-top-color: rgba(200,169,110,0.22);
+}
+.cru-card .card-name {
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text);
+}
+.cru-card .card-location {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 400;
+}
+.cru-card .card-badges {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+.cru-card .card-terroir {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.3rem 0.6rem;
+  margin-top: 0.2rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid rgba(107,29,42,0.07);
+}
+.cru-card.tasted .card-terroir {
+  border-top-color: rgba(200,169,110,0.2);
+}
+.cru-card .terroir-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.cru-card .terroir-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-weight: 500;
+}
+.cru-card .terroir-value {
+  font-size: 0.78rem;
+  color: var(--text);
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cru-card .terroir-value.unknown {
+  color: var(--muted);
+  font-style: italic;
+}
+.cru-card .card-rating {
+  margin-top: auto;
+  padding-top: 0.4rem;
+}
+
+@media (max-width: 900px) {
+  .cru-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  .cru-grid { grid-template-columns: 1fr; }
+}
+
+/* ---- Filter bar ---- */
+.filter-bar {
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.search-wrapper {
+  position: relative;
+}
+.search-icon {
+  position: absolute;
+  left: 1.1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  pointer-events: none;
+  opacity: 0.5;
+}
+.filter-search {
+  width: 100%;
+  font-size: 1rem;
+  font-weight: 400;
+  padding: 0.8rem 1.2rem 0.8rem 2.8rem;
+  border-radius: 40px;
+  border: 1.5px solid var(--border);
+  background: white;
+  color: var(--text);
+  box-shadow: 0 2px 8px rgba(30,32,48,0.06);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.filter-search:focus {
+  outline: none;
+  border-color: var(--burgundy);
+  box-shadow: 0 0 0 3px rgba(107,29,42,0.1), 0 2px 8px rgba(30,32,48,0.06);
+}
+.filter-row {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.filter-group-label {
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-weight: 600;
+  margin-right: 0.1rem;
+  flex-shrink: 0;
+}
+.filter-pill {
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.32rem 0.85rem;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  background: white;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.13s, border-color 0.13s, color 0.13s, transform 0.1s, box-shadow 0.13s;
+  box-shadow: 0 1px 3px rgba(30,32,48,0.05);
+}
+.filter-pill:hover {
+  border-color: var(--burgundy);
+  color: var(--burgundy);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(107,29,42,0.12);
+}
+.filter-pill.active {
+  background: var(--burgundy);
+  border-color: var(--burgundy);
+  color: white;
+  box-shadow: 0 3px 10px rgba(107,29,42,0.3);
+}
+.filter-pill.active-gold {
+  background: var(--gold);
+  border-color: #b39055;
+  color: #1e2030;
+  box-shadow: 0 3px 10px rgba(200,169,110,0.35);
+}
+.filter-count {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-left: auto;
+  background: white;
+  border: 1.5px solid var(--border);
+  padding: 0.28rem 0.8rem;
+  border-radius: 20px;
+}
+.clear-filters {
+  font-size: 0.75rem;
+  color: var(--muted);
+  background: none;
+  border: none;
+  padding: 0.2rem 0.3rem;
+  cursor: pointer;
+  text-decoration: underline;
+  font-weight: 400;
+}
+.clear-filters:hover { color: var(--burgundy); background: none; }
+
+/* ---- Terroir section ---- */
+.terroir-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.fact-card {
+  background: var(--tasted-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+}
+.fact-card .fact-label {
+  font-size: 0.7rem;
+  font-family: sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-bottom: 0.3rem;
+}
+.fact-card .fact-value {
+  font-size: 0.95rem;
+  color: var(--text);
+  line-height: 1.4;
+}
+.fact-card .fact-value.unknown {
+  color: var(--muted);
+  font-style: italic;
+}
+.climate-block {
+  background: var(--tasted-bg);
+  border-left: 3px solid var(--border);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 0.65rem 1rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-style: italic;
+  margin-bottom: 1rem;
+}
+
+/* ---- Map page ---- */
+.map-page {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 56px);
+}
+.map-controls {
+  padding: 0.6rem 1.5rem;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.map-container {
+  flex: 1;
+  min-height: 0;
+}
+
+@media (max-width: 640px) {
+  .terroir-grid { grid-template-columns: 1fr 1fr; }
+}
