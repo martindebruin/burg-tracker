@@ -4,6 +4,7 @@ import { api } from "../api";
 import { RatingDisplay } from "../components/RatingWidget";
 import { NoteForm } from "../components/NoteForm";
 import { TerroirForm } from "../components/TerroirForm";
+import { CruEditForm } from "../components/CruEditForm";
 
 export function CruPage() {
   const { id } = useParams();
@@ -13,6 +14,7 @@ export function CruPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
   const [editingTerroir, setEditingTerroir] = useState(false);
+  const [editingCru, setEditingCru] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -57,6 +59,11 @@ export function CruPage() {
     setEditingTerroir(false);
   }
 
+  function handleCruSaved(updated) {
+    setCru(updated);
+    setEditingCru(false);
+  }
+
   if (loading) return <div className="page"><p className="empty">Loading…</p></div>;
   if (error)   return <div className="page"><p className="empty" style={{ color: "var(--rating-neg)" }}>{error}</p></div>;
   if (!cru)    return null;
@@ -72,29 +79,49 @@ export function CruPage() {
 
       {/* Header */}
       <div className="card">
-        <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start", flexWrap: "wrap" }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.5rem" }}>
-              <span className={`badge badge-${cru.type}`}>
-                {cru.type === "grand" ? "Grand Cru" : "Premier Cru"}
-              </span>
-              {cru.color && <span className="badge badge-color">{cru.color}</span>}
-              {hasTasted && <span className="badge badge-tasted">Provad</span>}
+        {editingCru ? (
+          <>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+              <h2 style={{ margin: 0 }}>Redigera vin</h2>
             </div>
-            <h1 style={{ marginBottom: "0.4rem" }}>{cru.name}</h1>
-            <p className="muted" style={{ margin: 0 }}>
-              {cru.commune} · {cru.subregion} · {cru.region}
-            </p>
-          </div>
+            <CruEditForm
+              cru={cru}
+              onSaved={handleCruSaved}
+              onCancel={() => setEditingCru(false)}
+            />
+          </>
+        ) : (
+          <>
+            <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start", flexWrap: "wrap" }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.5rem" }}>
+                  <span className={`badge badge-${cru.type}`}>
+                    {cru.type === "grand" ? "Grand Cru" : "Premier Cru"}
+                  </span>
+                  {cru.color && <span className="badge badge-color">{cru.color}</span>}
+                  {hasTasted && <span className="badge badge-tasted">Provad</span>}
+                </div>
+                <h1 style={{ marginBottom: "0.4rem" }}>{cru.name}</h1>
+                <p className="muted" style={{ margin: 0 }}>
+                  {cru.commune} · {cru.subregion} · {cru.region}
+                </p>
+              </div>
 
-          {hasTasted && (
-            <div style={{ textAlign: "right" }}>
-              <div className="muted" style={{ fontSize: "0.8rem" }}>
-                {notes.length} provning{notes.length > 1 ? "ar" : ""}
+              <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+                {hasTasted && (
+                  <div style={{ textAlign: "right" }}>
+                    <div className="muted" style={{ fontSize: "0.8rem" }}>
+                      {notes.length} provning{notes.length > 1 ? "ar" : ""}
+                    </div>
+                  </div>
+                )}
+                <button onClick={() => setEditingCru(true)}>
+                  ✏️ Redigera
+                </button>
               </div>
             </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
 
       {/* Terroir */}
@@ -261,7 +288,16 @@ export function CruPage() {
                     color: '#6b7280',
                     flexWrap: 'wrap'
                   }}>
-                    <strong style={{ color: '#111827' }}>👤 {note.user.username}</strong>
+                    <Link
+                      to={`/profile/${note.user.username}`}
+                      style={{
+                        color: 'var(--burgundy)',
+                        fontWeight: 600,
+                        textDecoration: 'none'
+                      }}
+                    >
+                      👤 {note.user.username}
+                    </Link>
                     {note.vintage && <span>Årgång {note.vintage}</span>}
                     <span>{new Date(note.tasted_on).toLocaleDateString('sv-SE')}</span>
                     {note.rating !== null && (

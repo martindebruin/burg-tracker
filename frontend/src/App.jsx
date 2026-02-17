@@ -6,6 +6,8 @@ import { CruPage } from "./pages/CruPage";
 import { MapPage } from "./pages/MapPage";
 import { LoginPage } from "./pages/LoginPage";
 import { AdminPage } from "./pages/AdminPage";
+import { UserProfilePage } from "./pages/UserProfilePage";
+import { ReviewsPage } from "./pages/ReviewsPage";
 
 function TopBar() {
   const { user, logout } = useAuth();
@@ -15,29 +17,20 @@ function TopBar() {
   return (
     <div className="topbar">
       <Link to="/" className="topbar-brand">
-        🍷 Bourgogne
+        Bourgogne
       </Link>
       <nav className="topbar-nav">
         <Link to="/" className="nav-link">Alla crus</Link>
+        <Link to="/reviews" className="nav-link">🍷 Recensioner</Link>
         <Link to="/map" className="nav-link">🗺 Karta</Link>
+        <Link to={`/profile/${user.username}`} className="nav-link">Min profil</Link>
         {user.is_admin && (
           <Link to="/admin" className="nav-link">Admin</Link>
         )}
       </nav>
-      <div style={{ marginLeft: 'auto', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-        <span style={{ fontSize: '0.9rem', color: '#fff' }}>👤 {user.username}</span>
-        <button
-          onClick={logout}
-          style={{
-            padding: '0.5rem 1rem',
-            background: 'transparent',
-            border: '1px solid rgba(255,255,255,0.3)',
-            color: '#fff',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '0.85rem'
-          }}
-        >
+      <div className="topbar-user">
+        <span className="topbar-username">👤 {user.username}</span>
+        <button onClick={logout} className="topbar-logout">
           Logga ut
         </button>
       </div>
@@ -55,7 +48,9 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
             <Route path="/cru/:id" element={<ProtectedRoute><CruPage /></ProtectedRoute>} />
+            <Route path="/reviews" element={<ProtectedRoute><ReviewsPage /></ProtectedRoute>} />
             <Route path="/map" element={<ProtectedRoute><MapPage /></ProtectedRoute>} />
+            <Route path="/profile/:username" element={<ProtectedRoute><UserProfilePage /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminPage /></ProtectedRoute>} />
           </Routes>
         </div>

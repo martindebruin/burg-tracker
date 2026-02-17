@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from routers import crus, notes, auth, admin
+from routers import crus, notes, auth, admin, users, reviews
 from auth import get_current_user
 
 app = FastAPI(title="Bourgogne Wine Tracker", version="1.0")
@@ -15,6 +15,8 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(admin.router)
+app.include_router(users.router)
+app.include_router(reviews.router)
 app.include_router(crus.router)
 app.include_router(notes.router)
 

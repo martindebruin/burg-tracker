@@ -52,10 +52,12 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
 
     with db() as conn:
         cur = conn.cursor()
-        cur.execute(
-            "SELECT id, username, email, is_admin FROM app_user WHERE id = %s",
-            (user_id,)
-        )
+        cur.execute("""
+            SELECT id, username, email, is_admin, nickname, bio,
+                   mastodon_url, bluesky_url, vivino_url,
+                   cellartracker_url, delectable_url
+            FROM app_user WHERE id = %s
+        """, (user_id,))
         row = cur.fetchone()
         if not row:
             raise credentials_exception

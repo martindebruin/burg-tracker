@@ -157,14 +157,22 @@ def get_cru(cru_id: int):
 
 @router.put("/{cru_id}")
 def update_cru(cru_id: int, updates: dict):
-    """Update terroir fields for a cru"""
-    allowed_fields = {"soil_type", "elevation_m", "aspect", "climate_notes", "area_ha", "latitude", "longitude"}
+    """Update fields for a cru"""
+    allowed_fields = {"name", "color", "type", "subregion", "commune", "soil_type", "elevation_m", "aspect", "climate_notes", "area_ha", "latitude", "longitude"}
 
     # Filter to only allowed fields
     filtered = {k: v for k, v in updates.items() if k in allowed_fields}
 
     if not filtered:
         raise HTTPException(status_code=400, detail="No valid fields to update")
+
+    # Validate color if provided
+    if "color" in filtered and filtered["color"] not in (None, "", "rouge", "blanc", "both"):
+        raise HTTPException(status_code=400, detail="Color must be 'rouge', 'blanc', or 'both'")
+
+    # Validate type if provided
+    if "type" in filtered and filtered["type"] not in ("grand", "premier"):
+        raise HTTPException(status_code=400, detail="Type must be 'grand' or 'premier'")
 
     # Build SET clause
     set_parts = []

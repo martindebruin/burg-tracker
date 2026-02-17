@@ -53,6 +53,21 @@ export const api = {
   },
   getMe: () => req("/auth/me"),
 
+  // Users/Profile
+  getUserProfile: (username) => req(`/users/${username}`),
+  getTopWines: (username) => req(`/users/${username}/top-wines`),
+  updateMyProfile: (data) => req("/users/me", { method: "PUT", body: JSON.stringify(data) }),
+
+  // Reviews
+  getReviewsByColor: (color, params = {}) => {
+    const qs = new URLSearchParams({ color, ...params }).toString()
+    return req(`/reviews/by-color?${qs}`)
+  },
+  getTopWinesByColor: (color, limit = 10) => {
+    const qs = new URLSearchParams({ color, limit }).toString()
+    return req(`/reviews/top-wines?${qs}`)
+  },
+
   // Admin
   createUser: (data) => req("/admin/users", { method: "POST", body: JSON.stringify(data) }),
   getUsers: (params = {}) => {
